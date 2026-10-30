@@ -1,0 +1,87 @@
+name: Build iOS App
+
+on:
+  push:
+    branches: [ main ]
+    tags: [ 'v*' ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Xcode-Version
+        run: |
+          sudo xcode-select -p
+          xcodebuild -version
+          xcodebuild -showsdks | grep -i ios || true
+
+      - name: XcodeGen installieren
+        run: brew install xcodegen
+
+      - name: Projekt generieren
+        run: xcodegen generate
+
+      - name: Build (unsigniert)
+        run: |
+          set -eo pipefail
+          xcodebuild \
+            -project SatisfactoryServerApp.xcodeproj \
+            -scheme SatisfactoryServerApp \
+            -configuration Release \
+            -sdk iphoneos \
+            -destination 'generic/platform=iOS' \
+            -archivePath build/App.xcarchive \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" CODE_SIGN_ENTITLEMENTS="" \
+            archive
+
+      - name: IPA paketieren
+        run: |
+          set -eo pipefail
+          APP=$(ls -d build/App.xcarchive/Products/Applications/*.app | head -1)
+          echo "App: $APP"
+          mkdir -p build/Payload
+          cp -R "$APP" build/Payload/
+          (cd build && zip -r -y Satisfactory.ipa Payload > /dev/null)
+          ls -la build/Satisfactory.ipa
+
+      - name: Artefakt hochladen
+        uses: actions/upload-artifact@v4
+        with:
+          name: Satisfactory-ipa
+          path: build/Satisfactory.ipa
+
+      - name: SideStore-Source aktualisieren (nur bei Tag)
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          set -eo pipefail
+          VERSION="${GITHUB_REF_NAME#v}"
+          SIZE=$(stat -f%z build/Satisfactory.ipa)
+          DATE=$(date +%Y-%m-%d)
+          python3 - "$VERSION" "$SIZE" "$DATE" <<'PY'
+          import json, sys
+          version, size, date = sys.argv[1], int(sys.argv[2]), sys.argv[3]
+          with open("apps.json") as f: src = json.load(f)
+          app = src["apps"][0]
+          app["version"] = version
+          app["versionDate"] = date
+          app["size"] = size
+          with open("apps.json", "w") as f: json.dump(src, f, indent=2, ensure_ascii=False)
+          print("apps.json ->", version, size)
+          PY
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add apps.json
+          git commit -m "ci: apps.json auf ${VERSION}" || echo "keine Änderung"
+          git push origin HEAD:main || echo "push übersprungen"
+
+      - name: Release erstellen (nur bei Tag)
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: build/Satisfactory.ipa

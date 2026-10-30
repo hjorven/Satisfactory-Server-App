@@ -1,0 +1,24 @@
+{
+  "name": "Satisfactory Server",
+  "subtitle": "Server-Übersicht & Alarme",
+  "identifier": "com.hjorven.satisfactory.source",
+  "sourceURL": "https://raw.githubusercontent.com/hjorven/Satisfactory-Server-App/main/apps.json",
+  "apps": [
+    {
+      "name": "Satisfactory",
+      "bundleIdentifier": "com.hjorven.satisfactoryserverapp",
+      "developerName": "hjorven",
+      "subtitle": "Server-Monitor & Steuerung",
+      "version": "1.0.0",
+      "versionDate": "2026-10-31",
+      "versionDescription": "Erste Version: Übersicht, Strom, Steuerung, Auto-Discovery.",
+      "downloadURL": "https://github.com/hjorven/Satisfactory-Server-App/releases/latest/download/Satisfactory.ipa",
+      "localizedDescription": "Übersicht, Strom-Monitoring und Steuerung für deinen Satisfactory-Dedicated-Server. Findet den Server automatisch im WLAN.",
+      "iconURL": "https://raw.githubusercontent.com/hjorven/Satisfactory-Server-App/main/Resources/Assets.xcassets/AppIcon.appiconset/icon-1024.png",
+      "tintColor": "b7f34a",
+      "size": 5000000,
+      "minOSVersion": "26.0"
+    }
+  ],
+  "news": []
+}
