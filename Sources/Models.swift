@@ -59,6 +59,7 @@ struct Player: Codable, Identifiable {
     var PlayerHP: Double?
     var Dead: Bool?
     var location: FRMLoc?
+    var lastSeen: Double?   // ms seit Epoche, serverseitig getrackt
     var id: String { self.ID ?? Name }
 }
 

@@ -93,7 +93,8 @@ final class APIClient {
     }
 
     func players(_ base: URL) async throws -> [Player] {
-        let data = try await request(base, "api/frm/getPlayer")
+        // /api/players = FRM getPlayer + serverseitiges lastSeen
+        let data = try await request(base, "api/players")
         return (try? JSONDecoder().decode([Player].self, from: data)) ?? []
     }
 

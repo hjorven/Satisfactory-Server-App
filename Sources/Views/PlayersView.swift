@@ -39,6 +39,10 @@ struct PlayersView: View {
                                                 .font(.caption).foregroundStyle(.secondary)
                                         }
                                     }
+                                    if !p.Online, let ls = p.lastSeen {
+                                        Text("zuletzt online: \(lastSeenText(ls))")
+                                            .font(.caption2).foregroundStyle(.secondary)
+                                    }
                                     if let hp = p.PlayerHP {
                                         ProgressView(value: max(0, min(100, hp)), total: 100) {
                                             HStack {
@@ -64,5 +68,15 @@ struct PlayersView: View {
 
     private var sortedPlayers: [Player] {
         store.players.sorted { ($0.Online ? 0 : 1, $0.Name) < ($1.Online ? 0 : 1, $1.Name) }
+    }
+
+    private func lastSeenText(_ ms: Double) -> String {
+        let date = Date(timeIntervalSince1970: ms / 1000)
+        let secs = Date().timeIntervalSince(date)
+        if secs < 90 { return "gerade eben" }
+        if secs < 3600 { return "vor \(Int(secs / 60)) min" }
+        if secs < 86400 { return "vor \(Int(secs / 3600)) Std" }
+        let f = DateFormatter(); f.dateFormat = "dd.MM. HH:mm"
+        return f.string(from: date)
     }
 }
