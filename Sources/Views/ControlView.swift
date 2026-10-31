@@ -112,6 +112,18 @@ struct ControlView: View {
                                     .frame(maxWidth: .infinity, alignment: .leading)
                                     .padding(.vertical, 8)
                             }
+                            Divider()
+                            NavigationLink { ScheduleView() } label: {
+                                Label("Neustart-Zeitplan", systemImage: "calendar.badge.clock")
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .padding(.vertical, 8)
+                            }
+                            Divider()
+                            NavigationLink { AlertsView() } label: {
+                                Label("Alarme", systemImage: "bell.badge.fill")
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .padding(.vertical, 8)
+                            }
                         }
                     }
 

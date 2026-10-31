@@ -87,6 +87,11 @@ struct OverviewView: View {
                                 Label("Transport (Züge/Fahrzeuge)", systemImage: "tram.fill")
                                     .frame(maxWidth: .infinity, alignment: .leading).padding(.vertical, 8)
                             }
+                            Divider()
+                            NavigationLink { HostView() } label: {
+                                Label("System (Host/Speicher)", systemImage: "cpu.fill")
+                                    .frame(maxWidth: .infinity, alignment: .leading).padding(.vertical, 8)
+                            }
                         }
                     }
                 }

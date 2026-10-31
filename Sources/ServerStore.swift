@@ -23,6 +23,11 @@ final class ServerStore {
     var drones: [DroneInfo] = []
     var mods: [ModItem] = []
     var serverSettings: ServerSettings?
+    var host: HostInfo?
+    var alertConfig: AlertConfig?
+    var alertHistory: [AlertHistoryItem] = []
+    var schedule: RestartSchedule?
+    var restartTimer: RestartTimerState?
     var powerHistory: [PowerSample] = []   // rollender Verlauf für das Diagramm
     private let maxHistory = 180           // 180 × 5 s ≈ 15 min
 
@@ -189,6 +194,11 @@ final class ServerStore {
         drones = []
         mods = []
         serverSettings = nil
+        host = nil
+        alertConfig = nil
+        alertHistory = []
+        schedule = nil
+        restartTimer = nil
         powerHistory = []
         gameAuthed = false
         actionStatus = nil
@@ -373,6 +383,70 @@ final class ServerStore {
             setStatus("Backup wiederhergestellt – Server neu gestartet.")
             await refresh()
         } catch { actionStatus = nil; lastError = errorText(error) }
+    }
+
+    // MARK: - Host / Alarme / Zeitplan
+
+    func fetchHost() async {
+        guard let url = baseURL else { return }
+        host = (try? await APIClient.shared.host(url)) ?? host
+    }
+
+    func fetchAlerts() async {
+        guard let url = baseURL else { return }
+        alertConfig = (try? await APIClient.shared.alertConfig(url)) ?? alertConfig
+        alertHistory = (try? await APIClient.shared.alertHistory(url)) ?? alertHistory
+    }
+
+    func saveAlertConfig(_ c: AlertConfig) async {
+        guard let url = baseURL else { return }
+        busyAction = "alerts"
+        lastError = nil
+        defer { busyAction = nil }
+        do {
+            try await APIClient.shared.saveAlertConfig(url, c)
+            alertConfig = c
+            setStatus("Alarm-Einstellungen gespeichert.")
+        } catch { lastError = errorText(error) }
+    }
+
+    func fetchSchedule() async {
+        guard let url = baseURL else { return }
+        schedule = (try? await APIClient.shared.schedule(url)) ?? schedule
+        restartTimer = (try? await APIClient.shared.restartTimer(url)) ?? restartTimer
+    }
+
+    func saveSchedule(_ s: RestartSchedule) async {
+        guard let url = baseURL else { return }
+        busyAction = "schedule"
+        lastError = nil
+        defer { busyAction = nil }
+        do {
+            try await APIClient.shared.saveSchedule(url, s)
+            schedule = s
+            setStatus("Zeitplan gespeichert.")
+        } catch { lastError = errorText(error) }
+    }
+
+    func setRestartTimer(minutes: Int) async {
+        guard let url = baseURL else { return }
+        busyAction = "restart-timer"
+        lastError = nil
+        defer { busyAction = nil }
+        do {
+            try await APIClient.shared.setRestartTimer(url, minutes: minutes)
+            setStatus("Neustart in \(minutes) min geplant.")
+            await fetchSchedule()
+        } catch { lastError = errorText(error) }
+    }
+
+    func cancelRestartTimer() async {
+        guard let url = baseURL else { return }
+        do {
+            try await APIClient.shared.cancelRestartTimer(url)
+            setStatus("Geplanter Neustart abgebrochen.")
+            await fetchSchedule()
+        } catch { lastError = errorText(error) }
     }
 
     private func errorText(_ error: Error) -> String {

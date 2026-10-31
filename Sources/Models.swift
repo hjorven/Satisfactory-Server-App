@@ -162,6 +162,49 @@ struct SessionInfo: Codable {
     var NumberOfDaysSinceLastDeath: Int?
 }
 
+// #7 Host-Monitor
+struct HostInfo: Codable {
+    var uptimeSec: Double?
+    var memTotalMB: Double?
+    var memAvailMB: Double?
+    var load1: Double?
+    var load5: Double?
+    var cpuCount: Int?
+    var diskTotalGB: Double?
+    var diskUsedGB: Double?
+    var diskFreeGB: Double?
+}
+
+// #9 Alarm-Center
+struct AlertConfig: Codable {
+    var power: Bool
+    var derail: Bool
+    var playerJoin: Bool
+    var playerLeave: Bool
+    var serverDown: Bool
+    var lowDisk: Bool
+    var lowDiskGB: Double
+}
+struct AlertHistoryItem: Codable, Identifiable {
+    var time: Double
+    var type: String
+    var message: String
+    var id: String { "\(time)-\(message)" }
+}
+struct AlertHistoryResponse: Codable { var history: [AlertHistoryItem] }
+
+// #3 Neustart-Zeitplan
+struct RestartSchedule: Codable {
+    var enabled: Bool
+    var time: String
+    var skipIfPlayers: Bool
+    var warnMinutes: Int
+}
+struct RestartTimerState: Codable {
+    var active: Bool
+    var at: Double?
+}
+
 struct HealthResponse: Codable {
     var ok: Bool
     var configured: Bool

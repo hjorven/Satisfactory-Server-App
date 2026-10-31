@@ -151,6 +151,43 @@ final class APIClient {
                                  "autosaveInterval": s.autosaveInterval])
     }
 
+    // MARK: - Host / Alarme / Zeitplan
+
+    func host(_ base: URL) async throws -> HostInfo {
+        try JSONDecoder().decode(HostInfo.self, from: try await request(base, "api/host"))
+    }
+
+    func alertConfig(_ base: URL) async throws -> AlertConfig {
+        try JSONDecoder().decode(AlertConfig.self, from: try await request(base, "api/alerts/config"))
+    }
+    func saveAlertConfig(_ base: URL, _ c: AlertConfig) async throws {
+        try await request(base, "api/alerts/config", method: "POST",
+                          body: ["power": c.power, "derail": c.derail, "playerJoin": c.playerJoin,
+                                 "playerLeave": c.playerLeave, "serverDown": c.serverDown,
+                                 "lowDisk": c.lowDisk, "lowDiskGB": c.lowDiskGB])
+    }
+    func alertHistory(_ base: URL) async throws -> [AlertHistoryItem] {
+        try JSONDecoder().decode(AlertHistoryResponse.self, from: try await request(base, "api/alerts/history")).history
+    }
+
+    func schedule(_ base: URL) async throws -> RestartSchedule {
+        try JSONDecoder().decode(RestartSchedule.self, from: try await request(base, "api/schedule"))
+    }
+    func saveSchedule(_ base: URL, _ s: RestartSchedule) async throws {
+        try await request(base, "api/schedule", method: "POST",
+                          body: ["enabled": s.enabled, "time": s.time,
+                                 "skipIfPlayers": s.skipIfPlayers, "warnMinutes": s.warnMinutes])
+    }
+    func restartTimer(_ base: URL) async throws -> RestartTimerState {
+        try JSONDecoder().decode(RestartTimerState.self, from: try await request(base, "api/restart-timer"))
+    }
+    func setRestartTimer(_ base: URL, minutes: Int) async throws {
+        try await request(base, "api/restart-timer", method: "POST", body: ["minutes": minutes])
+    }
+    func cancelRestartTimer(_ base: URL) async throws {
+        try await request(base, "api/restart-timer", method: "POST", body: ["cancel": true])
+    }
+
     @discardableResult
     func control(_ base: URL, action: String) async throws -> String? {
         // Docker-Aktionen (stop/restart) können dauern → großzügiges Timeout
