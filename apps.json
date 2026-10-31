@@ -16,7 +16,7 @@
       "localizedDescription": "Übersicht, Strom-Monitoring und Steuerung für deinen Satisfactory-Dedicated-Server. Findet den Server automatisch im WLAN.",
       "iconURL": "https://raw.githubusercontent.com/hjorven/Satisfactory-Server-App/main/Resources/Assets.xcassets/AppIcon.appiconset/icon-1024.png",
       "tintColor": "b7f34a",
-      "size": 5000000,
+      "size": 120573,
       "minOSVersion": "26.0"
     }
   ],
