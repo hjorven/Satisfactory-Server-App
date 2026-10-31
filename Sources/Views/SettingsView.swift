@@ -57,8 +57,11 @@ struct SettingsView: View {
                     Section("Satisfactory-Spiel-Admin") {
                         if store.gameAuthed {
                             LabeledContent("Status") {
-                                Label("Verbunden", systemImage: "checkmark.circle.fill")
-                                    .foregroundStyle(.green)
+                                HStack(spacing: 5) {
+                                    Image(systemName: "checkmark.circle.fill")
+                                    Text("Verbunden")
+                                }
+                                .foregroundStyle(.green)
                             }
                             Button("Spiel-Admin trennen", role: .destructive) {
                                 store.logoutGame()
