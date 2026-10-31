@@ -36,16 +36,24 @@ struct MapView: View {
             .background(.black.opacity(0.25))
             .clipShape(RoundedRectangle(cornerRadius: 20))
             .contentShape(Rectangle())
+            .highPriorityGesture(
+                MagnifyGesture()
+                    .onChanged { v in
+                        let s1 = clamp(lastScale * v.magnification)
+                        let r = s1 / lastScale
+                        let ax = v.startAnchor.x * geo.size.width - geo.size.width / 2
+                        let ay = v.startAnchor.y * geo.size.height - geo.size.height / 2
+                        scale = s1
+                        offset = CGSize(width: ax * (1 - r) + lastOffset.width * r,
+                                        height: ay * (1 - r) + lastOffset.height * r)
+                    }
+                    .onEnded { _ in lastScale = scale; lastOffset = offset }
+            )
             .gesture(
-                SimultaneousGesture(
-                    MagnifyGesture()
-                        .onChanged { scale = clamp(lastScale * $0.magnification) }
-                        .onEnded { _ in lastScale = scale },
-                    DragGesture()
-                        .onChanged { offset = CGSize(width: lastOffset.width + $0.translation.width,
-                                                     height: lastOffset.height + $0.translation.height) }
-                        .onEnded { _ in lastOffset = offset }
-                )
+                DragGesture()
+                    .onChanged { offset = CGSize(width: lastOffset.width + $0.translation.width,
+                                                 height: lastOffset.height + $0.translation.height) }
+                    .onEnded { _ in lastOffset = offset }
             )
             .onTapGesture(count: 2) { withAnimation(.easeOut(duration: 0.25)) { frameBase(side: side) } }
             .overlay(alignment: .topLeading) { legend.padding(12) }
