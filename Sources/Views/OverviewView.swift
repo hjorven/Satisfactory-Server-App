@@ -102,7 +102,7 @@ struct OverviewView: View {
                 }
                 .padding()
             }
-            .refreshable { await store.refresh() }
+            .refreshable { await store.pullRefresh() }
             .navigationTitle("Übersicht")
             .overlay(alignment: .bottom) {
                 if store.overview == nil && store.connectionState == .connecting {

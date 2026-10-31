@@ -57,7 +57,7 @@ struct PlayersView: View {
                 }
                 .padding()
             }
-            .refreshable { await store.refresh() }
+            .refreshable { await store.pullRefresh() }
             .navigationTitle("Spieler")
         }
     }

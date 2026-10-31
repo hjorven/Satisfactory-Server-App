@@ -60,7 +60,7 @@ struct PowerView: View {
                 }
                 .padding()
             }
-            .refreshable { await store.refresh() }
+            .refreshable { await store.pullRefresh() }
             .navigationTitle("Strom")
         }
     }

@@ -245,6 +245,13 @@ final class ServerStore {
         }
     }
 
+    /// Für Pull-to-Refresh: erzwingt eine sichtbare Mindest-Spinnerdauer.
+    func pullRefresh() async {
+        async let r: Void = refresh()
+        try? await Task.sleep(for: .milliseconds(650))
+        await r
+    }
+
     func refresh() async {
         guard let url = baseURL else { return }
         do {

@@ -7,83 +7,83 @@ struct MapView: View {
     @State private var offset: CGSize = .zero
     @State private var lastOffset: CGSize = .zero
     @State private var loading = false
+    @State private var framed = false
 
-    private let buildingColor = Color.orange.opacity(0.35)
-    private let markerColor = Color.orange
-    private let vehicleColor = Color.blue
-    private let playerColor = Color(red: 0.72, green: 0.95, blue: 0.29)   // App-Akzent
+    // Welt-Grenzen (cm) – entsprechen der quadratischen 5000×5000 In-Game-Karte
+    private let minX = -324698.832, maxX = 425301.832
+    private let minY = -375000.0, maxY = 375000.0
+
+    private let buildingColor = Color.orange.opacity(0.9)
+    private let markerColor = Color.white
+    private let vehicleColor = Color.cyan
+    private let playerColor = Color(red: 0.72, green: 0.95, blue: 0.29)
 
     var body: some View {
         GeometryReader { geo in
+            let side = min(geo.size.width, geo.size.height)
             ZStack {
-                Canvas { ctx, size in draw(ctx, size: size) }
-                    .scaleEffect(scale)
-                    .offset(offset)
-                    .contentShape(Rectangle())
-                    .gesture(
-                        SimultaneousGesture(
-                            MagnifyGesture()
-                                .onChanged { v in scale = clamp(lastScale * v.magnification) }
-                                .onEnded { _ in lastScale = scale },
-                            DragGesture()
-                                .onChanged { v in offset = CGSize(width: lastOffset.width + v.translation.width,
-                                                                  height: lastOffset.height + v.translation.height) }
-                                .onEnded { _ in lastOffset = offset }
-                        )
-                    )
-                    .onTapGesture(count: 2) { reset() }
+                ZStack {
+                    Image("worldmap")
+                        .resizable()
+                        .frame(width: side, height: side)
+                    Canvas { ctx, size in draw(ctx, size: size) }
+                        .frame(width: side, height: side)
+                }
+                .scaleEffect(scale)
+                .offset(offset)
             }
             .frame(width: geo.size.width, height: geo.size.height)
-            .glassEffect(.regular, in: .rect(cornerRadius: 20))
+            .background(.black.opacity(0.25))
             .clipShape(RoundedRectangle(cornerRadius: 20))
+            .contentShape(Rectangle())
+            .gesture(
+                SimultaneousGesture(
+                    MagnifyGesture()
+                        .onChanged { scale = clamp(lastScale * $0.magnification) }
+                        .onEnded { _ in lastScale = scale },
+                    DragGesture()
+                        .onChanged { offset = CGSize(width: lastOffset.width + $0.translation.width,
+                                                     height: lastOffset.height + $0.translation.height) }
+                        .onEnded { _ in lastOffset = offset }
+                )
+            )
+            .onTapGesture(count: 2) { withAnimation(.easeOut(duration: 0.25)) { frameBase(side: side) } }
             .overlay(alignment: .topLeading) { legend.padding(12) }
-            .overlay {
-                if isEmpty {
-                    ContentUnavailableView {
-                        Label("Keine Kartendaten", systemImage: "map")
-                    } description: {
-                        Text("Läuft der Server und ist FRM aktiv?")
-                    }
-                }
-            }
             .overlay(alignment: .bottomTrailing) {
                 if loading { ProgressView().padding(10).glassEffect(in: .circle).padding(12) }
+            }
+            .task {
+                await load()
+                if !framed { frameBase(side: side); framed = true }
             }
         }
         .padding()
         .navigationTitle("Karte")
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
-                Button { reset() } label: { Image(systemName: "scope") }
-            }
-            ToolbarItem(placement: .topBarTrailing) {
                 Button { Task { await load() } } label: { Image(systemName: "arrow.clockwise") }
             }
         }
-        .task { await load() }
     }
 
-    // MARK: - Daten
+    // MARK: - Punkte
 
     private struct P { var x: Double; var y: Double; var kind: Int; var label: String? }
 
     private var points: [P] {
         var out: [P] = []
-        // Gebäude (gedünnt, damit die Karte nicht überladen wird)
         let b = store.mapBuildings.compactMap { $0.location }
-        let step = max(1, b.count / 1500)
+        let step = max(1, b.count / 2000)
         var i = 0
         while i < b.count { out.append(P(x: b[i].x, y: b[i].y, kind: 0, label: nil)); i += step }
-        // Marker
         for m in store.mapMarkers { if let l = m.location { out.append(P(x: l.x, y: l.y, kind: 1, label: nil)) } }
-        // Fahrzeuge
         for v in store.vehicles { if let l = v.location { out.append(P(x: l.x, y: l.y, kind: 2, label: v.Name)) } }
-        // Spieler (zuletzt = oben)
         for p in store.players { if let l = p.location { out.append(P(x: l.x, y: l.y, kind: 3, label: p.Name)) } }
         return out
     }
 
-    private var isEmpty: Bool { points.isEmpty }
+    private func nx(_ x: Double) -> Double { (x - minX) / (maxX - minX) }
+    private func ny(_ y: Double) -> Double { (y - minY) / (maxY - minY) }
 
     private func load() async {
         loading = true
@@ -91,60 +91,49 @@ struct MapView: View {
         loading = false
     }
 
-    private func clamp(_ v: CGFloat) -> CGFloat { min(10, max(0.6, v)) }
-    private func reset() { withAnimation(.easeOut(duration: 0.25)) { scale = 1; lastScale = 1; offset = .zero; lastOffset = .zero } }
+    private func clamp(_ v: CGFloat) -> CGFloat { min(14, max(0.8, v)) }
+
+    /// Zentriert & zoomt auf die vorhandenen Objekte (Basis).
+    private func frameBase(side: CGFloat) {
+        let pts = points
+        guard !pts.isEmpty else { scale = 1; lastScale = 1; offset = .zero; lastOffset = .zero; return }
+        let xsN = pts.map { nx($0.x) }, ysN = pts.map { ny($0.y) }
+        let cx = (xsN.min()! + xsN.max()!) / 2, cy = (ysN.min()! + ysN.max()!) / 2
+        let span = max(xsN.max()! - xsN.min()!, ysN.max()! - ysN.min()!, 0.03)
+        let s = min(14, max(1, 0.6 / span))
+        scale = s; lastScale = s
+        offset = CGSize(width: -(cx - 0.5) * side * s, height: -(cy - 0.5) * side * s)
+        lastOffset = offset
+    }
 
     // MARK: - Zeichnen
 
     private func draw(_ ctx: GraphicsContext, size: CGSize) {
-        drawGrid(ctx, size: size)
-        let pts = points
-        guard !pts.isEmpty else { return }
-
-        let xs = pts.map(\.x), ys = pts.map(\.y)
-        var minX = xs.min()!, maxX = xs.max()!, minY = ys.min()!, maxY = ys.max()!
-        let padX = max(5000, (maxX - minX) * 0.08), padY = max(5000, (maxY - minY) * 0.08)
-        minX -= padX; maxX += padX; minY -= padY; maxY += padY
-        let w = max(1, maxX - minX), h = max(1, maxY - minY)
-        let s = min(size.width / w, size.height / h)
-        let ox = (size.width - w * s) / 2, oy = (size.height - h * s) / 2
-        func proj(_ x: Double, _ y: Double) -> CGPoint {
-            CGPoint(x: ox + (x - minX) * s, y: oy + (y - minY) * s)
-        }
-
-        for p in pts {
-            let pt = proj(p.x, p.y)
+        for p in points {
+            let pt = CGPoint(x: nx(p.x) * size.width, y: ny(p.y) * size.height)
             switch p.kind {
             case 0:
-                ctx.fill(Path(ellipseIn: CGRect(x: pt.x - 1.5, y: pt.y - 1.5, width: 3, height: 3)),
+                ctx.fill(Path(ellipseIn: CGRect(x: pt.x - 1.3, y: pt.y - 1.3, width: 2.6, height: 2.6)),
                          with: .color(buildingColor))
             case 1:
                 ctx.fill(Path(ellipseIn: CGRect(x: pt.x - 3, y: pt.y - 3, width: 6, height: 6)),
                          with: .color(markerColor))
+                ctx.stroke(Path(ellipseIn: CGRect(x: pt.x - 3, y: pt.y - 3, width: 6, height: 6)),
+                           with: .color(.black.opacity(0.6)), lineWidth: 1)
             case 2:
                 ctx.fill(Path(ellipseIn: CGRect(x: pt.x - 3.5, y: pt.y - 3.5, width: 7, height: 7)),
                          with: .color(vehicleColor))
             default:
                 ctx.fill(Path(ellipseIn: CGRect(x: pt.x - 7, y: pt.y - 7, width: 14, height: 14)),
-                         with: .color(.black.opacity(0.5)))
+                         with: .color(.black.opacity(0.6)))
                 ctx.fill(Path(ellipseIn: CGRect(x: pt.x - 5, y: pt.y - 5, width: 10, height: 10)),
                          with: .color(playerColor))
                 if let name = p.label {
-                    ctx.draw(Text(name).font(.caption2.bold()).foregroundStyle(.white),
-                             at: CGPoint(x: pt.x, y: pt.y - 14))
+                    ctx.draw(Text(name).font(.system(size: 9, weight: .bold)).foregroundStyle(.white),
+                             at: CGPoint(x: pt.x, y: pt.y - 13))
                 }
             }
         }
-    }
-
-    private func drawGrid(_ ctx: GraphicsContext, size: CGSize) {
-        var path = Path()
-        let gap: CGFloat = 56
-        var x: CGFloat = 0
-        while x <= size.width { path.move(to: CGPoint(x: x, y: 0)); path.addLine(to: CGPoint(x: x, y: size.height)); x += gap }
-        var y: CGFloat = 0
-        while y <= size.height { path.move(to: CGPoint(x: 0, y: y)); path.addLine(to: CGPoint(x: size.width, y: y)); y += gap }
-        ctx.stroke(path, with: .color(.white.opacity(0.06)), lineWidth: 1)
     }
 
     private var legend: some View {
