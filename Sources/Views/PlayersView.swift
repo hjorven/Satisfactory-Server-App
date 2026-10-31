@@ -17,6 +17,17 @@ struct PlayersView: View {
                         }
                     }
 
+                    if let w = store.worldStats {
+                        GlassCard {
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text("WELT").font(.caption2).foregroundStyle(.secondary)
+                                if let b = w.buildings { StatusRow(label: "Gebäude gesamt", value: "\(b)") }
+                                if let d = w.passedDays { StatusRow(label: "Tag", value: "\(d)") }
+                                if let pd = w.totalPlayDuration, !pd.isEmpty { StatusRow(label: "Spielzeit (Welt)", value: pd) }
+                            }
+                        }
+                    }
+
                     if store.players.isEmpty {
                         GlassCard {
                             Text("Keine Spielerdaten. Läuft der Server und ist FRM aktiv?")
@@ -54,6 +65,12 @@ struct PlayersView: View {
                                         }
                                         .tint(hp > 30 ? .green : .orange)
                                     }
+                                    if let ms = p.onlineMs, ms > 0 {
+                                        StatusRow(label: "Spielzeit (getrackt)", value: durationText(ms))
+                                    }
+                                    if let dm = p.distanceM, dm > 0 {
+                                        StatusRow(label: "Distanz", value: distanceText(dm))
+                                    }
                                 }
                             }
                         }
@@ -61,8 +78,9 @@ struct PlayersView: View {
                 }
                 .padding()
             }
-            .refreshable { await store.pullRefresh() }
+            .refreshable { await store.pullRefresh(); await store.fetchWorldStats() }
             .navigationTitle("Spieler")
+            .task { await store.fetchWorldStats() }
         }
     }
 
@@ -78,5 +96,17 @@ struct PlayersView: View {
         if secs < 86400 { return "vor \(Int(secs / 3600)) Std" }
         let f = DateFormatter(); f.dateFormat = "dd.MM. HH:mm"
         return f.string(from: date)
+    }
+
+    private func durationText(_ ms: Double) -> String {
+        let total = Int(ms / 1000)
+        let h = total / 3600, m = (total % 3600) / 60
+        if h > 0 { return "\(h) h \(m) min" }
+        if m > 0 { return "\(m) min" }
+        return "< 1 min"
+    }
+
+    private func distanceText(_ m: Double) -> String {
+        m >= 1000 ? String(format: "%.1f km", m / 1000) : "\(Int(m)) m"
     }
 }

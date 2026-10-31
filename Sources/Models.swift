@@ -60,6 +60,8 @@ struct Player: Codable, Identifiable {
     var Dead: Bool?
     var location: FRMLoc?
     var lastSeen: Double?   // ms seit Epoche, serverseitig getrackt
+    var onlineMs: Double?   // akkumulierte Online-Zeit (ab Tracking-Start)
+    var distanceM: Double?  // gelaufene Distanz in Metern (ab Tracking-Start)
     var id: String { self.ID ?? Name }
 }
 
@@ -222,6 +224,12 @@ struct RestartSchedule: Codable {
 struct RestartTimerState: Codable {
     var active: Bool
     var at: Double?
+}
+
+struct WorldStats: Codable {
+    var buildings: Int?
+    var totalPlayDuration: String?
+    var passedDays: Int?
 }
 
 struct HealthResponse: Codable {

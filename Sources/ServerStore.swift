@@ -13,6 +13,7 @@ final class ServerStore {
     var overview: Overview?
     var circuits: [PowerCircuit] = []
     var players: [Player] = []
+    var worldStats: WorldStats?
     var saves: [SaveGame] = []
     var backups: [BackupItem] = []
     var backupStatus: BackupStatus?
@@ -200,6 +201,7 @@ final class ServerStore {
         overview = nil
         circuits = []
         players = []
+        worldStats = nil
         saves = []
         backups = []
         backupStatus = nil
@@ -354,6 +356,11 @@ final class ServerStore {
     }
 
     // MARK: - Spielstände
+
+    func fetchWorldStats() async {
+        guard let url = baseURL else { return }
+        worldStats = (try? await APIClient.shared.worldStats(url)) ?? worldStats
+    }
 
     func fetchSaves() async {
         guard let url = baseURL else { return }

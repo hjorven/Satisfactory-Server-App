@@ -98,6 +98,10 @@ final class APIClient {
         return (try? JSONDecoder().decode([Player].self, from: data)) ?? []
     }
 
+    func worldStats(_ base: URL) async throws -> WorldStats {
+        try JSONDecoder().decode(WorldStats.self, from: try await request(base, "api/worldstats"))
+    }
+
     // MARK: - Spielstände & Backups
 
     func saves(_ base: URL) async throws -> SavesResponse {
