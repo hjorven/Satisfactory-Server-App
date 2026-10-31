@@ -56,6 +56,39 @@ struct OverviewView: View {
                             }
                         }
                     }
+
+                    if let s = store.session {
+                        GlassCard {
+                            VStack(alignment: .leading, spacing: 10) {
+                                Text("SPIELWELT").font(.caption2).foregroundStyle(.secondary)
+                                if let d = s.PassedDays {
+                                    StatusRow(label: "Tag", value: "\(d)")
+                                }
+                                if let h = s.Hours, let m = s.Minutes {
+                                    StatusRow(label: "Uhrzeit",
+                                              value: "\(String(format: "%02d:%02d", h, m)) \(s.IsDay == true ? "☀️" : "🌙")")
+                                }
+                                if let pd = s.TotalPlayDurationText, !pd.isEmpty {
+                                    StatusRow(label: "Spielzeit", value: pd)
+                                }
+                            }
+                        }
+                    }
+
+                    GlassCard {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("MEHR").font(.caption2).foregroundStyle(.secondary)
+                            NavigationLink { ProductionView() } label: {
+                                Label("Produktion", systemImage: "chart.bar.fill")
+                                    .frame(maxWidth: .infinity, alignment: .leading).padding(.vertical, 8)
+                            }
+                            Divider()
+                            NavigationLink { FleetView() } label: {
+                                Label("Transport (Züge/Fahrzeuge)", systemImage: "tram.fill")
+                                    .frame(maxWidth: .infinity, alignment: .leading).padding(.vertical, 8)
+                            }
+                        }
+                    }
                 }
                 .padding()
             }

@@ -16,6 +16,13 @@ final class ServerStore {
     var saves: [SaveGame] = []
     var backups: [BackupItem] = []
     var backupStatus: BackupStatus?
+    var session: SessionInfo?
+    var prodStats: [ProdItem] = []
+    var trains: [TrainInfo] = []
+    var vehicles: [VehicleInfo] = []
+    var drones: [DroneInfo] = []
+    var mods: [ModItem] = []
+    var serverSettings: ServerSettings?
     var powerHistory: [PowerSample] = []   // rollender Verlauf für das Diagramm
     private let maxHistory = 180           // 180 × 5 s ≈ 15 min
 
@@ -175,6 +182,13 @@ final class ServerStore {
         saves = []
         backups = []
         backupStatus = nil
+        session = nil
+        prodStats = []
+        trains = []
+        vehicles = []
+        drones = []
+        mods = []
+        serverSettings = nil
         powerHistory = []
         gameAuthed = false
         actionStatus = nil
@@ -228,6 +242,7 @@ final class ServerStore {
             self.overview = overview
             self.circuits = circuits
             self.players = (try? await pl) ?? []
+            self.session = (try? await APIClient.shared.sessionInfo(url)) ?? self.session
             // Verlauf für das Diagramm fortschreiben
             powerHistory.append(PowerSample(time: Date(),
                                             production: Double(overview.power.production),
@@ -362,6 +377,44 @@ final class ServerStore {
 
     private func errorText(_ error: Error) -> String {
         (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
+    }
+
+    // MARK: - Produktion / Transport / Mods / Einstellungen
+
+    func fetchProd() async {
+        guard let url = baseURL else { return }
+        prodStats = (try? await APIClient.shared.prodStats(url)) ?? []
+    }
+
+    func fetchFleet() async {
+        guard let url = baseURL else { return }
+        trains = (try? await APIClient.shared.trains(url)) ?? []
+        vehicles = (try? await APIClient.shared.vehicles(url)) ?? []
+        drones = (try? await APIClient.shared.drones(url)) ?? []
+    }
+
+    func fetchMods() async {
+        guard let url = baseURL else { return }
+        do { mods = try await APIClient.shared.mods(url).mods }
+        catch { lastError = errorText(error) }
+    }
+
+    func fetchSettings() async {
+        guard let url = baseURL else { return }
+        do { serverSettings = try await APIClient.shared.settings(url) }
+        catch { lastError = errorText(error) }
+    }
+
+    func saveSettings(_ s: ServerSettings) async {
+        guard let url = baseURL else { return }
+        busyAction = "settings"
+        lastError = nil
+        defer { busyAction = nil }
+        do {
+            try await APIClient.shared.saveSettings(url, s)
+            serverSettings = s
+            setStatus("Einstellungen gespeichert.")
+        } catch { lastError = errorText(error) }
     }
 
     private func pendingText(for action: String) -> String {

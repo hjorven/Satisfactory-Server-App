@@ -4,15 +4,15 @@ Geplante Features für App **und** Web-UI. Legende: ✅ fertig · 🔜 als Näch
 
 ## 🎮 Steuerung
 - ✅ **#1 Spielstand-Browser & Backup-Wiederherstellung** — Saves laden/löschen, Backups (lokal/NAS) per Tipp wiederherstellen. *(`/api/saves*`, `/api/backups`)*
-- ⬜ **#2 Server-Einstellungen live ändern** — Autosave-Intervall, Auto-Pause, Max-Spieler, Tickrate aus App/Web. *(`/api/settings`)*
-- ⬜ **#3 Geplanter Neustart mit In-Game-Vorwarnung** — Chat-Warnung an Online-Spieler + ntfy vor Neustart; optional nur wenn leer. *(`/api/schedule`, FRM)*
-- ⬜ **#4 Mod-Verwaltung mit Update-Check** — installierte Mods + Versionen, Abgleich gegen ficsit.app, hoch-/entfernen. *(`/api/mods`)*
+- ✅ **#2 Server-Einstellungen live ändern** — Auto-Pause, Speichern-beim-Verlassen, Autosave-Intervall. *(`/api/settings`)*
+- ⬜ **#3 Geplanter Neustart mit Vorwarnung** — Zeitplan-UI + ntfy-Vorwarnung + „nur wenn leer". *(`/api/schedule`)* — Hinweis: In-Game-Chat-Warnung **nicht möglich** (Server-API bietet keine Broadcast-Funktion).
+- ✅ **#4 Mod-Liste** — installierte Mods (Ordner/Datei, Größe). *(`/api/mods`)* — Update-Abgleich gegen ficsit.app später.
 
 ## 📊 Überwachung
 - ⬜ **#5 Live-Karte** — Spieler/Züge/Fahrzeuge/Marker auf der Satisfactory-Karte. *(FRM `getMapMarkers`/`getPlayer`/`getVehicles`/`getTrains`/`getDrone`)*
-- ⬜ **#6 Produktions-/Fabrik-Statistik** — Items/min, Maschinen laufend vs. blockiert, Lagerstände, Trend. *(FRM `getFactory`)*
+- ✅ **#6 Produktions-Statistik** — Items/min (Produktion & Verbrauch), Auslastung. *(FRM `getProdStats`)*
 - ⬜ **#7 Host- & Ressourcen-Monitor** — Host-CPU/RAM, freier Speicher, Uptime, Spiel-/SML-Version, Steam-Update; Alarm bei wenig Platz. *(neuer Host-Endpunkt)*
-- ⬜ **#8 Zug- & Fahrzeug-Zustand** — Entgleisung, Treibstoff, „steht seit X min", Routenprobleme. *(FRM `getTrains`/`getVehicles`/`getDrone`)*
+- ✅ **#8 Transport (Züge/Fahrzeuge/Drohnen)** — Liste + Entgleisungs-/Autopilot-Status. *(FRM `getTrains`/`getVehicles`/`getDrone`)*
 - ✅ **Strom-Verlaufsdiagramm** — Erzeugung/Verbrauch über Zeit (Teil der Übersicht/Strom).
 
 ## 🔔 Infos & Benachrichtigung

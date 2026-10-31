@@ -119,6 +119,38 @@ final class APIClient {
         try await request(base, "api/backups/\(name)/restore", method: "POST", timeout: 180)
     }
 
+    // MARK: - Weitere Monitoring-/Steuer-Endpunkte
+
+    private func frmArray<T: Decodable>(_ base: URL, _ endpoint: String, _ type: T.Type) async throws -> [T] {
+        let data = try await request(base, "api/frm/\(endpoint)")
+        return (try? JSONDecoder().decode([T].self, from: data)) ?? []
+    }
+
+    func prodStats(_ base: URL) async throws -> [ProdItem] { try await frmArray(base, "getProdStats", ProdItem.self) }
+    func trains(_ base: URL) async throws -> [TrainInfo] { try await frmArray(base, "getTrains", TrainInfo.self) }
+    func vehicles(_ base: URL) async throws -> [VehicleInfo] { try await frmArray(base, "getVehicles", VehicleInfo.self) }
+    func drones(_ base: URL) async throws -> [DroneInfo] { try await frmArray(base, "getDrone", DroneInfo.self) }
+
+    func sessionInfo(_ base: URL) async throws -> SessionInfo? {
+        let data = try await request(base, "api/frm/getSessionInfo")
+        return try? JSONDecoder().decode(SessionInfo.self, from: data)
+    }
+
+    func mods(_ base: URL) async throws -> ModsResponse {
+        try JSONDecoder().decode(ModsResponse.self, from: try await request(base, "api/mods"))
+    }
+
+    func settings(_ base: URL) async throws -> ServerSettings {
+        try JSONDecoder().decode(ServerSettings.self, from: try await request(base, "api/settings"))
+    }
+
+    func saveSettings(_ base: URL, _ s: ServerSettings) async throws {
+        try await request(base, "api/settings", method: "POST",
+                          body: ["autoPause": s.autoPause,
+                                 "autoSaveOnDisconnect": s.autoSaveOnDisconnect,
+                                 "autosaveInterval": s.autosaveInterval])
+    }
+
     @discardableResult
     func control(_ base: URL, action: String) async throws -> String? {
         // Docker-Aktionen (stop/restart) können dauern → großzügiges Timeout

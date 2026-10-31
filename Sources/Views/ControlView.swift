@@ -100,6 +100,18 @@ struct ControlView: View {
                                     .frame(maxWidth: .infinity, alignment: .leading)
                                     .padding(.vertical, 8)
                             }
+                            Divider()
+                            NavigationLink { ServerSettingsView() } label: {
+                                Label("Server-Einstellungen", systemImage: "gearshape.2.fill")
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .padding(.vertical, 8)
+                            }
+                            Divider()
+                            NavigationLink { ModsView() } label: {
+                                Label("Mods", systemImage: "puzzlepiece.extension.fill")
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .padding(.vertical, 8)
+                            }
                         }
                     }
 
