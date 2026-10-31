@@ -39,6 +39,13 @@ struct PowerCircuit: Codable, Identifiable {
     var id: Int { CircuitGroupID }
 }
 
+struct PowerSample: Identifiable {
+    let id = UUID()
+    let time: Date
+    let production: Double
+    let consumption: Double
+}
+
 struct HealthResponse: Codable {
     var ok: Bool
     var configured: Bool

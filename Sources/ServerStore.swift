@@ -12,6 +12,8 @@ final class ServerStore {
     // Laufzeit-Zustand
     var overview: Overview?
     var circuits: [PowerCircuit] = []
+    var powerHistory: [PowerSample] = []   // rollender Verlauf für das Diagramm
+    private let maxHistory = 180           // 180 × 5 s ≈ 15 min
     var connectionState: ConnectionState = .idle
     var role: String = "guest"
     var lastError: String?
@@ -116,6 +118,7 @@ final class ServerStore {
         baseURL = nil
         overview = nil
         circuits = []
+        powerHistory = []
         connectionState = .idle
         persist()
     }
@@ -151,6 +154,13 @@ final class ServerStore {
             let circuits = try await pw
             self.overview = overview
             self.circuits = circuits
+            // Verlauf für das Diagramm fortschreiben
+            powerHistory.append(PowerSample(time: Date(),
+                                            production: Double(overview.power.production),
+                                            consumption: Double(overview.power.consumption)))
+            if powerHistory.count > maxHistory {
+                powerHistory.removeFirst(powerHistory.count - maxHistory)
+            }
             if let r = overview.role { self.role = r }
             if connectionState != .connected { connectionState = .connected }
         } catch APIError.unauthorized {
