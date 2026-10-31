@@ -52,7 +52,7 @@ struct Player: Codable, Identifiable {
     var Online: Bool
     var PlayerHP: Double?
     var Dead: Bool?
-    var id: String { ID ?? Name }
+    var id: String { self.ID ?? Name }
 }
 
 struct SaveGame: Codable, Identifiable {
