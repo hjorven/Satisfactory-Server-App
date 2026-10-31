@@ -8,6 +8,7 @@ struct OverviewView: View {
     var body: some View {
         NavigationStack {
             ScrollView {
+                GlassEffectContainer(spacing: 0) {
                 VStack(spacing: 14) {
                     if let alerts = store.overview?.alerts, !alerts.isEmpty {
                         ForEach(alerts) { alert in
@@ -99,6 +100,7 @@ struct OverviewView: View {
                             }
                         }
                     }
+                }
                 }
                 .padding()
             }
