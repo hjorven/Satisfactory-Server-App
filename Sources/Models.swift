@@ -98,8 +98,12 @@ struct ProdItem: Codable, Identifiable {
     var MaxConsumed: Double?
     var ProdPercent: Double?
     var ConsPercent: Double?
-    var Type: String?
+    var itemType: String?
     var id: String { ClassName ?? Name }
+    enum CodingKeys: String, CodingKey {
+        case Name, ClassName, CurrentProd, MaxProd, CurrentConsumed, MaxConsumed, ProdPercent, ConsPercent
+        case itemType = "Type"
+    }
 }
 
 // #8 Transport (Züge/Fahrzeuge/Drohnen) – FRM-Felder sind je nach Aufbau unterschiedlich,

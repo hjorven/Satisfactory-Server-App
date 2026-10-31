@@ -34,7 +34,7 @@ struct ProductionView: View {
                 HStack {
                     Text(i.Name).font(.headline)
                     Spacer()
-                    if let t = i.Type { Text(t).font(.caption2).foregroundStyle(.secondary) }
+                    if let t = i.itemType { Text(t).font(.caption2).foregroundStyle(.secondary) }
                 }
                 if let p = i.CurrentProd, p > 0 {
                     StatusRow(label: "Produktion", value: "\(fmt(p)) / \(fmt(i.MaxProd ?? 0)) /min")
