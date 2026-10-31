@@ -130,6 +130,8 @@ final class APIClient {
     func trains(_ base: URL) async throws -> [TrainInfo] { try await frmArray(base, "getTrains", TrainInfo.self) }
     func vehicles(_ base: URL) async throws -> [VehicleInfo] { try await frmArray(base, "getVehicles", VehicleInfo.self) }
     func drones(_ base: URL) async throws -> [DroneInfo] { try await frmArray(base, "getDrone", DroneInfo.self) }
+    func mapMarkers(_ base: URL) async throws -> [MapMarker] { try await frmArray(base, "getMapMarkers", MapMarker.self) }
+    func factory(_ base: URL) async throws -> [MapBuilding] { try await frmArray(base, "getFactory", MapBuilding.self) }
 
     func sessionInfo(_ base: URL) async throws -> SessionInfo? {
         let data = try await request(base, "api/frm/getSessionInfo")

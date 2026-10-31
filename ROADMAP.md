@@ -9,7 +9,7 @@ Geplante Features für App **und** Web-UI. Legende: ✅ fertig · 🔜 als Näch
 - ✅ **#4 Mod-Liste** — installierte Mods (Ordner/Datei, Größe). *(`/api/mods`)* — Update-Abgleich gegen ficsit.app später.
 
 ## 📊 Überwachung
-- ⬜ **#5 Live-Karte** — Spieler/Züge/Fahrzeuge/Marker auf der Satisfactory-Karte. *(FRM `getMapMarkers`/`getPlayer`/`getVehicles`/`getTrains`/`getDrone`)*
+- ✅ **#5 Karte** — native SwiftUI-Karte (Zoom/Pan, Glas-Look): Spieler, Marker, Fahrzeuge, Gebäude-Footprint. *(FRM `getPlayer`/`getMapMarkers`/`getFactory`/`getVehicles`)*
 - ✅ **#6 Produktions-Statistik** — Items/min (Produktion & Verbrauch), Auslastung. *(FRM `getProdStats`)*
 - ✅ **#7 Host-Monitor** — Uptime, RAM, Load, Speicherplatz (frei/belegt). *(`/api/host`)*
 - ✅ **#8 Transport (Züge/Fahrzeuge/Drohnen)** — Liste + Entgleisungs-/Autopilot-Status. *(FRM `getTrains`/`getVehicles`/`getDrone`)*
@@ -27,4 +27,4 @@ Geplante Features für App **und** Web-UI. Legende: ✅ fertig · 🔜 als Näch
 - SideStore-Umstieg, sobald Apple-Login (Anisette) wieder funktioniert → automatische 7-Tage-Erneuerung
 
 ---
-*Reihenfolge nach Sofort-Nutzen/Aufwand. Nächste Kandidaten: #2 (Einstellungen), #5 (Karte), #8 (Züge).*
+*Alle 10 Kernfeatures umgesetzt. Als Nächstes die „Später / Extra"-Liste (Widgets/Live Activity, Mod-Update-Abgleich, SideStore-Umstieg).*

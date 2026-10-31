@@ -28,6 +28,8 @@ final class ServerStore {
     var alertHistory: [AlertHistoryItem] = []
     var schedule: RestartSchedule?
     var restartTimer: RestartTimerState?
+    var mapMarkers: [MapMarker] = []
+    var mapBuildings: [MapBuilding] = []
     var powerHistory: [PowerSample] = []   // rollender Verlauf für das Diagramm
     private let maxHistory = 180           // 180 × 5 s ≈ 15 min
 
@@ -199,6 +201,8 @@ final class ServerStore {
         alertHistory = []
         schedule = nil
         restartTimer = nil
+        mapMarkers = []
+        mapBuildings = []
         powerHistory = []
         gameAuthed = false
         actionStatus = nil
@@ -447,6 +451,20 @@ final class ServerStore {
             setStatus("Geplanter Neustart abgebrochen.")
             await fetchSchedule()
         } catch { lastError = errorText(error) }
+    }
+
+    // MARK: - Karte (#5)
+
+    func fetchMap() async {
+        guard let url = baseURL else { return }
+        async let mk = APIClient.shared.mapMarkers(url)
+        async let fac = APIClient.shared.factory(url)
+        async let veh = APIClient.shared.vehicles(url)
+        async let pl = APIClient.shared.players(url)
+        mapMarkers = (try? await mk) ?? []
+        mapBuildings = (try? await fac) ?? []
+        vehicles = (try? await veh) ?? []
+        players = (try? await pl) ?? players
     }
 
     private func errorText(_ error: Error) -> String {

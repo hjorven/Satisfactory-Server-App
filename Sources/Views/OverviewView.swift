@@ -78,6 +78,11 @@ struct OverviewView: View {
                     GlassCard {
                         VStack(alignment: .leading, spacing: 4) {
                             Text("MEHR").font(.caption2).foregroundStyle(.secondary)
+                            NavigationLink { MapView() } label: {
+                                Label("Karte", systemImage: "map.fill")
+                                    .frame(maxWidth: .infinity, alignment: .leading).padding(.vertical, 8)
+                            }
+                            Divider()
                             NavigationLink { ProductionView() } label: {
                                 Label("Produktion", systemImage: "chart.bar.fill")
                                     .frame(maxWidth: .infinity, alignment: .leading).padding(.vertical, 8)

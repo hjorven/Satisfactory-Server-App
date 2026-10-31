@@ -46,13 +46,30 @@ struct PowerSample: Identifiable {
     let consumption: Double
 }
 
+struct FRMLoc: Codable {
+    var x: Double
+    var y: Double
+    var z: Double?
+}
+
 struct Player: Codable, Identifiable {
     var ID: String?
     var Name: String
     var Online: Bool
     var PlayerHP: Double?
     var Dead: Bool?
+    var location: FRMLoc?
     var id: String { self.ID ?? Name }
+}
+
+// #5 Karte
+struct MapMarker: Codable {
+    var Name: String?
+    var location: FRMLoc?
+    var MapMarkerType: String?
+}
+struct MapBuilding: Codable {
+    var location: FRMLoc?
 }
 
 struct SaveGame: Codable, Identifiable {
@@ -122,6 +139,7 @@ struct VehicleInfo: Codable {
     var Speed: Double?
     var ForwardSpeed: Double?
     var AutoPilot: Bool?
+    var location: FRMLoc?
 }
 
 struct DroneInfo: Codable {
