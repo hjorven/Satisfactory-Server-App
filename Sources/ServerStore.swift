@@ -68,9 +68,23 @@ final class ServerStore {
     func startup() async {
         if let url = baseURL {
             await connect(to: url)
+            // Fällt die bekannte Adresse aus (z. B. unterwegs), über Tailscale versuchen
+            if connectionState == .failed, let r = normalizedURL(remoteAddress), r != url {
+                await connect(to: r)
+            }
         } else {
             await autoDiscover()
         }
+    }
+
+    /// Verbindet gezielt über die hinterlegte Remote-(Tailscale-)Adresse.
+    func connectRemote() async {
+        guard let url = normalizedURL(remoteAddress) else {
+            lastError = "Ungültige Remote-Adresse."
+            return
+        }
+        persist()
+        await connect(to: url)
     }
 
     func autoDiscover() async {

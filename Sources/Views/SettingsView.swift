@@ -26,10 +26,12 @@ struct SettingsView: View {
                 }
 
                 Section("Remote (Tailscale)") {
-                    TextField("z. B. satisfactory.<tailnet>.ts.net", text: $store.remoteAddress)
+                    TextField("z. B. 100.69.24.59 oder <name>.ts.net", text: $store.remoteAddress)
                         .textInputAutocapitalization(.never)
                         .autocorrectionDisabled()
-                    Text("Wird genutzt, wenn der Server nicht im WLAN gefunden wird.")
+                    Button("Über Tailscale verbinden") { Task { await store.connectRemote() } }
+                        .disabled(store.remoteAddress.isEmpty)
+                    Text("Wird auch automatisch genutzt, wenn der Server nicht im WLAN gefunden wird. Tailscale-VPN am iPhone muss aktiv sein.")
                         .font(.caption).foregroundStyle(.secondary)
                 }
 
