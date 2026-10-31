@@ -12,8 +12,14 @@ final class ServerStore {
     // Laufzeit-Zustand
     var overview: Overview?
     var circuits: [PowerCircuit] = []
+    var players: [Player] = []
+    var saves: [SaveGame] = []
+    var backups: [BackupItem] = []
+    var backupStatus: BackupStatus?
     var powerHistory: [PowerSample] = []   // rollender Verlauf für das Diagramm
     private let maxHistory = 180           // 180 × 5 s ≈ 15 min
+
+    var onlineCount: Int { players.filter(\.Online).count }
     var connectionState: ConnectionState = .idle
     var role: String = "guest"
     var lastError: String?
@@ -165,6 +171,10 @@ final class ServerStore {
         baseURL = nil
         overview = nil
         circuits = []
+        players = []
+        saves = []
+        backups = []
+        backupStatus = nil
         powerHistory = []
         gameAuthed = false
         actionStatus = nil
@@ -212,10 +222,12 @@ final class ServerStore {
         do {
             async let ov = APIClient.shared.overview(url)
             async let pw = APIClient.shared.power(url)
+            async let pl = APIClient.shared.players(url)
             let overview = try await ov
             let circuits = try await pw
             self.overview = overview
             self.circuits = circuits
+            self.players = (try? await pl) ?? []
             // Verlauf für das Diagramm fortschreiben
             powerHistory.append(PowerSample(time: Date(),
                                             production: Double(overview.power.production),
@@ -283,10 +295,73 @@ final class ServerStore {
         do {
             try await APIClient.shared.runBackup(url)
             setStatus("Backup gestartet.")
+            try? await Task.sleep(for: .seconds(3))
+            await fetchBackups()
         } catch {
             actionStatus = nil
             lastError = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
         }
+    }
+
+    // MARK: - Spielstände
+
+    func fetchSaves() async {
+        guard let url = baseURL else { return }
+        do { saves = try await APIClient.shared.saves(url).saves }
+        catch { lastError = errorText(error) }
+    }
+
+    func loadSave(_ name: String) async {
+        guard let url = baseURL else { return }
+        busyAction = "save-load"
+        lastError = nil
+        actionStatus = "Spielstand „\(name)" wird geladen …"
+        defer { busyAction = nil }
+        do {
+            try await APIClient.shared.loadSave(url, name: name)
+            setStatus("Spielstand „\(name)" geladen.")
+            await refresh()
+        } catch { actionStatus = nil; lastError = errorText(error) }
+    }
+
+    func deleteSave(_ name: String) async {
+        guard let url = baseURL else { return }
+        busyAction = "save-del"
+        lastError = nil
+        defer { busyAction = nil }
+        do {
+            try await APIClient.shared.deleteSave(url, name: name)
+            setStatus("Spielstand „\(name)" gelöscht.")
+            await fetchSaves()
+        } catch { lastError = errorText(error) }
+    }
+
+    // MARK: - Backups
+
+    func fetchBackups() async {
+        guard let url = baseURL else { return }
+        do {
+            let r = try await APIClient.shared.backups(url)
+            backups = r.backups
+            backupStatus = r.status
+        } catch { lastError = errorText(error) }
+    }
+
+    func restoreBackup(_ name: String) async {
+        guard let url = baseURL else { return }
+        busyAction = "restore"
+        lastError = nil
+        actionStatus = "Backup wird wiederhergestellt – Server stoppt …"
+        defer { busyAction = nil }
+        do {
+            try await APIClient.shared.restoreBackup(url, name: name)
+            setStatus("Backup wiederhergestellt – Server neu gestartet.")
+            await refresh()
+        } catch { actionStatus = nil; lastError = errorText(error) }
+    }
+
+    private func errorText(_ error: Error) -> String {
+        (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
     }
 
     private func pendingText(for action: String) -> String {

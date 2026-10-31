@@ -87,16 +87,19 @@ struct ControlView: View {
                     }
 
                     GlassCard {
-                        VStack(alignment: .leading, spacing: 10) {
-                            Text("BACKUP").font(.caption2).foregroundStyle(.secondary)
-                            Button {
-                                Task { await store.runBackup() }
-                            } label: {
-                                Label("Jetzt sichern", systemImage: "externaldrive.fill.badge.plus")
-                                    .frame(maxWidth: .infinity)
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("VERWALTUNG").font(.caption2).foregroundStyle(.secondary)
+                            NavigationLink { SavesView() } label: {
+                                Label("Spielstände", systemImage: "externaldrive.fill")
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .padding(.vertical, 8)
                             }
-                            .buttonStyle(.glass)
-                            .disabled(!store.isAdmin || busy)
+                            Divider()
+                            NavigationLink { BackupsView() } label: {
+                                Label("Backups", systemImage: "clock.arrow.circlepath")
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .padding(.vertical, 8)
+                            }
                         }
                     }
 

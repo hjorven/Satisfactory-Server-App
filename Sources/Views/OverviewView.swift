@@ -32,6 +32,10 @@ struct OverviewView: View {
                                    value: ov?.cpu.map { "\(Int($0))%" } ?? "–")
                         MetricTile(label: "RAM",
                                    value: ov?.ramMB.map { "\(Int($0)) MB" } ?? "–")
+                        MetricTile(label: "Spieler",
+                                   value: "\(store.onlineCount)",
+                                   foot: store.players.isEmpty ? nil : "\(store.players.count) gesamt",
+                                   tint: store.onlineCount > 0 ? .green : .secondary)
                     }
 
                     GlassCard {

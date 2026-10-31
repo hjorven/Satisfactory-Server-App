@@ -92,6 +92,33 @@ final class APIClient {
         return (try? JSONDecoder().decode([PowerCircuit].self, from: data)) ?? []
     }
 
+    func players(_ base: URL) async throws -> [Player] {
+        let data = try await request(base, "api/frm/getPlayer")
+        return (try? JSONDecoder().decode([Player].self, from: data)) ?? []
+    }
+
+    // MARK: - Spielstände & Backups
+
+    func saves(_ base: URL) async throws -> SavesResponse {
+        try JSONDecoder().decode(SavesResponse.self, from: try await request(base, "api/saves"))
+    }
+
+    func loadSave(_ base: URL, name: String) async throws {
+        try await request(base, "api/saves/\(name)/load", method: "POST", timeout: 120)
+    }
+
+    func deleteSave(_ base: URL, name: String) async throws {
+        try await request(base, "api/saves/\(name)", method: "DELETE")
+    }
+
+    func backups(_ base: URL) async throws -> BackupsResponse {
+        try JSONDecoder().decode(BackupsResponse.self, from: try await request(base, "api/backups"))
+    }
+
+    func restoreBackup(_ base: URL, name: String) async throws {
+        try await request(base, "api/backups/\(name)/restore", method: "POST", timeout: 180)
+    }
+
     @discardableResult
     func control(_ base: URL, action: String) async throws -> String? {
         // Docker-Aktionen (stop/restart) können dauern → großzügiges Timeout

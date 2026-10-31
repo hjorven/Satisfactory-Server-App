@@ -13,6 +13,8 @@ struct RootView: View {
                         .tabItem { Label("Übersicht", systemImage: "gauge.with.dots.needle.67percent") }
                     PowerView()
                         .tabItem { Label("Strom", systemImage: "bolt.fill") }
+                    PlayersView()
+                        .tabItem { Label("Spieler", systemImage: "person.2.fill") }
                     ControlView()
                         .tabItem { Label("Steuerung", systemImage: "slider.horizontal.3") }
                     SettingsView()

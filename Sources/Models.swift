@@ -46,6 +46,48 @@ struct PowerSample: Identifiable {
     let consumption: Double
 }
 
+struct Player: Codable, Identifiable {
+    var ID: String?
+    var Name: String
+    var Online: Bool
+    var PlayerHP: Double?
+    var Dead: Bool?
+    var id: String { ID ?? Name }
+}
+
+struct SaveGame: Codable, Identifiable {
+    var saveName: String
+    var sessionName: String?
+    var saveDateTime: String?
+    var playDurationSeconds: Double?
+    var isModdedSave: Bool?
+    var id: String { saveName + (saveDateTime ?? "") }
+}
+
+struct SavesResponse: Codable {
+    var saves: [SaveGame]
+    var sessions: [String]?
+}
+
+struct BackupItem: Codable, Identifiable {
+    var name: String
+    var sizeMB: Double
+    var modified: String
+    var id: String { name }
+}
+
+struct BackupStatus: Codable {
+    var lastRun: String?
+    var localCount: Int?
+    var nasOk: Bool?
+    var nasCount: Int?
+}
+
+struct BackupsResponse: Codable {
+    var backups: [BackupItem]
+    var status: BackupStatus?
+}
+
 struct HealthResponse: Codable {
     var ok: Bool
     var configured: Bool
