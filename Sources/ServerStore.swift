@@ -315,11 +315,11 @@ final class ServerStore {
         guard let url = baseURL else { return }
         busyAction = "save-load"
         lastError = nil
-        actionStatus = "Spielstand „\(name)" wird geladen …"
+        actionStatus = "Spielstand \(name) wird geladen …"
         defer { busyAction = nil }
         do {
             try await APIClient.shared.loadSave(url, name: name)
-            setStatus("Spielstand „\(name)" geladen.")
+            setStatus("Spielstand \(name) geladen.")
             await refresh()
         } catch { actionStatus = nil; lastError = errorText(error) }
     }
@@ -331,7 +331,7 @@ final class ServerStore {
         defer { busyAction = nil }
         do {
             try await APIClient.shared.deleteSave(url, name: name)
-            setStatus("Spielstand „\(name)" gelöscht.")
+            setStatus("Spielstand \(name) gelöscht.")
             await fetchSaves()
         } catch { lastError = errorText(error) }
     }
