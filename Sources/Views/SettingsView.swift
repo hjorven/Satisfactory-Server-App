@@ -3,6 +3,7 @@ import SwiftUI
 struct SettingsView: View {
     @Environment(ServerStore.self) private var store
     @State private var adminPassword: String = ""
+    @State private var gamePassword: String = ""
 
     var body: some View {
         @Bindable var store = store
@@ -46,6 +47,31 @@ struct SettingsView: View {
                         }
                         .disabled(adminPassword.isEmpty)
                         Text("Nötig für Steuerung, Simulation und Backups. Wird sicher im Schlüsselbund gespeichert.")
+                            .font(.caption).foregroundStyle(.secondary)
+                    }
+                }
+
+                if store.isAdmin {
+                    Section("Satisfactory-Spiel-Admin") {
+                        if store.gameAuthed {
+                            LabeledContent("Status") {
+                                Label("Verbunden", systemImage: "checkmark.circle.fill")
+                                    .foregroundStyle(.green)
+                            }
+                            Button("Spiel-Admin trennen", role: .destructive) {
+                                store.logoutGame()
+                            }
+                        } else {
+                            SecureField("Satisfactory-Admin-Passwort", text: $gamePassword)
+                            Button("Spiel-Admin verbinden") {
+                                Task {
+                                    await store.loginGame(password: gamePassword)
+                                    gamePassword = ""
+                                }
+                            }
+                            .disabled(gamePassword.isEmpty)
+                        }
+                        Text("Nötig für Speichern & Simulation (Satisfactory-Server-Admin-Passwort, nicht das WebUI-Passwort).")
                             .font(.caption).foregroundStyle(.secondary)
                     }
                 }

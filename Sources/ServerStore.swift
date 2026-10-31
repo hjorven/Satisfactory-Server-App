@@ -19,6 +19,9 @@ final class ServerStore {
     var lastError: String?
     var isDiscovering = false
     var busyAction: String?
+    var gameAuthed = false          // Satisfactory-Spiel-Admin aktiv (für Speichern/Simulation)
+    var actionStatus: String?       // sachliches Feedback zur letzten Aktion
+    private var statusToken = UUID()
 
     enum ConnectionState: Equatable {
         case idle, connecting, connected, failed
@@ -81,9 +84,11 @@ final class ServerStore {
             if let pw = Keychain.get("adminPassword"), !pw.isEmpty {
                 let r = try await APIClient.shared.login(url, password: pw)
                 role = r.role ?? "admin"
+                await refreshGameAuth(url)
             } else {
                 try await APIClient.shared.loginGuest(url)
                 role = "guest"
+                gameAuthed = false
             }
             baseURL = url
             persist()
@@ -102,6 +107,7 @@ final class ServerStore {
             role = r.role ?? "admin"
             Keychain.set(password, for: "adminPassword")
             lastError = nil
+            await refreshGameAuth(url)
             await refresh()
         } catch {
             lastError = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
@@ -111,6 +117,47 @@ final class ServerStore {
     func logoutAdmin() {
         Keychain.delete("adminPassword")
         role = "guest"
+        gameAuthed = false
+    }
+
+    // MARK: - Satisfactory-Spiel-Admin
+
+    /// Meldet den Spiel-Admin an (nötig für Speichern/Simulation) und merkt sich das Passwort.
+    func loginGame(password: String) async {
+        guard let url = baseURL else { return }
+        do {
+            try await APIClient.shared.gameAuth(url, password: password)
+            Keychain.set(password, for: "gamePassword")
+            gameAuthed = true
+            lastError = nil
+            setStatus("Satisfactory-Spiel-Admin verbunden.")
+        } catch {
+            gameAuthed = false
+            lastError = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
+        }
+    }
+
+    /// Trennt den Spiel-Admin und vergisst das gespeicherte Passwort.
+    func logoutGame() {
+        Keychain.delete("gamePassword")
+        gameAuthed = false
+        Task { if let url = baseURL { try? await APIClient.shared.gameAuthLogout(url) } }
+    }
+
+    /// Stellt den Spiel-Token (falls Passwort gespeichert) wieder her und prüft den Status.
+    private func refreshGameAuth(_ url: URL) async {
+        if let authed = try? await APIClient.shared.gameAuthStatus(url), authed {
+            gameAuthed = true
+            return
+        }
+        if let gpw = Keychain.get("gamePassword"), !gpw.isEmpty {
+            do {
+                try await APIClient.shared.gameAuth(url, password: gpw)
+                gameAuthed = true
+                return
+            } catch { /* Passwort evtl. veraltet – Nutzer meldet sich neu an */ }
+        }
+        gameAuthed = false
     }
 
     func forgetServer() {
@@ -119,8 +166,23 @@ final class ServerStore {
         overview = nil
         circuits = []
         powerHistory = []
+        gameAuthed = false
+        actionStatus = nil
         connectionState = .idle
         persist()
+    }
+
+    /// Setzt eine kurze, sachliche Statusmeldung, die sich nach einigen Sekunden löscht.
+    private func setStatus(_ text: String?) {
+        actionStatus = text
+        guard text != nil else { return }
+        let token = UUID()
+        statusToken = token
+        Task { [weak self] in
+            try? await Task.sleep(for: .seconds(6))
+            guard let self, self.statusToken == token else { return }
+            self.actionStatus = nil
+        }
     }
 
     private func normalizedURL(_ raw: String) -> URL? {
@@ -176,12 +238,16 @@ final class ServerStore {
     func control(_ action: String) async {
         guard let url = baseURL else { return }
         busyAction = action
+        lastError = nil
+        actionStatus = pendingText(for: action)
         defer { busyAction = nil }
         do {
-            try await APIClient.shared.control(url, action: action)
-            try? await Task.sleep(for: .seconds(2))
+            let msg = try await APIClient.shared.control(url, action: action)
+            setStatus(msg ?? doneText(for: action))
+            try? await Task.sleep(for: .seconds(1))
             await refresh()
         } catch {
+            actionStatus = nil
             lastError = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
         }
     }
@@ -189,11 +255,21 @@ final class ServerStore {
     func simulation(mode: String, minutes: Int = 0) async {
         guard let url = baseURL else { return }
         busyAction = "sim"
+        lastError = nil
+        actionStatus = mode == "pause" ? "Fabrik wird pausiert …" : "Simulation wird aktiviert …"
         defer { busyAction = nil }
         do {
             try await APIClient.shared.simulation(url, mode: mode, minutes: minutes)
+            if mode == "pause" {
+                setStatus("Fabrik pausiert.")
+            } else if minutes > 0 {
+                setStatus("Simulation läuft für \(minutes) min.")
+            } else {
+                setStatus("Simulation dauerhaft aktiv.")
+            }
             await refresh()
         } catch {
+            actionStatus = nil
             lastError = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
         }
     }
@@ -201,11 +277,35 @@ final class ServerStore {
     func runBackup() async {
         guard let url = baseURL else { return }
         busyAction = "backup"
+        lastError = nil
+        actionStatus = "Backup wird gestartet …"
         defer { busyAction = nil }
         do {
             try await APIClient.shared.runBackup(url)
+            setStatus("Backup gestartet.")
         } catch {
+            actionStatus = nil
             lastError = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
+        }
+    }
+
+    private func pendingText(for action: String) -> String {
+        switch action {
+        case "start":   return "Server wird gestartet …"
+        case "stop":    return "Server wird gestoppt …"
+        case "restart": return "Server wird neu gestartet …"
+        case "save":    return "Spielstand wird gespeichert …"
+        default:        return "Aktion läuft …"
+        }
+    }
+
+    private func doneText(for action: String) -> String {
+        switch action {
+        case "start":   return "Server gestartet."
+        case "stop":    return "Server gestoppt."
+        case "restart": return "Server neu gestartet."
+        case "save":    return "Spielstand gespeichert."
+        default:        return "Fertig."
         }
     }
 }
