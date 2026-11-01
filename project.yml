@@ -37,5 +37,28 @@ targets:
           - _satisctl._tcp
         NSAppTransportSecurity:
           NSAllowsLocalNetworking: true
+    dependencies:
+      - target: SatisfactoryWidgets
+        embed: true
     scheme:
       testTargets: []
+
+  SatisfactoryWidgets:
+    type: app-extension
+    platform: iOS
+    sources:
+      - path: Widgets
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.hjorven.satisfactoryserverapp.widgets
+        PRODUCT_NAME: SatisfactoryWidgets
+        TARGETED_DEVICE_FAMILY: "1"
+        CODE_SIGN_STYLE: Automatic
+    info:
+      path: Widgets/Info.plist
+      properties:
+        CFBundleDisplayName: Satisfactory
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.widgetkit-extension
+        NSAppTransportSecurity:
+          NSAllowsLocalNetworking: true
